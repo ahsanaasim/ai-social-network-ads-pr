@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score
+from matplotlib.colors import ListedColormap
 
 class KNN:
     
@@ -21,10 +22,11 @@ class KNN:
             self.dataset = pd.read_json(filepath)
         elif type == "csv":
             self.dataset = pd.read_csv(filepath)
+            
         self.X = self.dataset.iloc[:, :-1].values
-        self.y = self.dataset.iloc[:, -2].values
+        self.y = self.dataset.iloc[:, -1].values
         self.handleMissingData()
-        self.encodeCategoricals()
+        # self.encodeCategoricals()
         self.encodeDependants()
         self.splitTestNTrains()
         self.scaleFeatures()
@@ -35,9 +37,6 @@ class KNN:
         imputer.fit(self.X[:, 1:2])
         self.X[:, 1:2] = imputer.transform(self.X[:, 1:2])
 
-        imputer2 = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
-        imputer2.fit(self.X[:, 0:1])
-        self.X[:, 0:1] = imputer2.transform(self.X[:, 0:1])
         
     def encodeCategoricals(self):
         ct = make_column_transformer((OneHotEncoder(), [0]), (OneHotEncoder(), [2]), (OneHotEncoder(), [3]), remainder='passthrough', sparse_threshold=0)
@@ -59,6 +58,7 @@ class KNN:
     def build(self):
         self.classifier = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
         self.classifier.fit(self.X_train, self.y_train)
+        print(self.classifier.predict(self.sc.transform([[30,87000]])))
         
     def predict(self):
         self.y_pred = self.classifier.predict(self.X_test)
@@ -67,6 +67,24 @@ class KNN:
         cm = confusion_matrix(self.y_test, self.y_pred)
         accuracy = accuracy_score(self.y_test, self.y_pred)
         print("KNN Accuracy: ", accuracy*100)
+        
+    def plot(self):
+        print("plot")
+        self.X_set, self.y_set = self.sc.inverse_transform(self.X_train), self.y_train
+        self.X1, self.X2 = np.meshgrid(np.arange(start = self.X_set[:, 0].min() - 10, stop = self.X_set[:, 0].max() + 10, step = 1),
+                             np.arange(start = self.X_set[:, 1].min() - 1000, stop = self.X_set[:, 1].max() + 1000, step = 1))
+        plt.contourf(self.X1, self.X2, self.classifier.predict(self.sc.transform(np.array([self.X1.ravel(), self.X2.ravel()]).T)).reshape(self.X1.shape),
+                     alpha = 0.75, cmap = ListedColormap(('red', 'green')))
+        plt.xlim(self.X1.min(), self.X1.max())
+        plt.ylim(self.X2.min(), self.X2.max())
+        for i, j in enumerate(np.unique(self.y_set)):
+            plt.scatter(self.X_set[self.y_set == j, 0], self.X_set[self.y_set == j, 1], c = ListedColormap(('red', 'green'))(i), label = j)
+        plt.title('K-NN (Training set)')
+        plt.xlabel('Age')
+        plt.ylabel('Estimated Salary')
+        plt.legend()
+        plt.show()
+        print("plotted")
 
 
 

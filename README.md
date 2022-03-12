@@ -1,1 +1,1 @@
-# ai-connection-request
+# AI Classification model practice using Salary Data from UDEMY course

@@ -15,13 +15,17 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 
 class SVM:
     
-    def __init__(self, filepath):
+    def __init__(self, filepath, type="json"):
         # Importing dataset
-        self.dataset = pd.read_json(filepath)
+        if type == "json":
+            self.dataset = pd.read_json(filepath)
+        elif type == "csv":
+            self.dataset = pd.read_csv(filepath)
+            
         self.X = self.dataset.iloc[:, :-1].values
-        self.y = self.dataset.iloc[:, -2].values
+        self.y = self.dataset.iloc[:, -1].values
         self.handleMissingData()
-        self.encodeCategoricals()
+        # self.encodeCategoricals()
         self.encodeDependants()
         self.splitTestNTrains()
         self.scaleFeatures()
